@@ -1,1117 +1,971 @@
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Doodle Jump - Школа 258</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            -webkit-tap-highlight-color: transparent;
-            -webkit-user-select: none;
-            user-select: none;
-            touch-action: manipulation;
-        }
-        
-        body {
-            background: linear-gradient(180deg, #87CEEB 0%, #6495ED 100%);
-            font-family: 'Arial', sans-serif;
-            color: #333;
-            overflow: hidden;
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 10px;
-        }
-        
-        .container {
-            width: 100%;
-            max-width: 440px;
-            text-align: center;
-        }
-        
-        .header {
-            margin-bottom: 15px;
-        }
-        
-        .game-title {
-            color: #FF3232;
-            font-size: 42px;
-            font-weight: bold;
-            text-shadow: 3px 3px 0 #000;
-            margin-bottom: 5px;
-        }
-        
-        .school-name {
-            color: #1E3A8A;
-            font-size: 24px;
-            font-weight: bold;
-            margin-bottom: 20px;
-        }
-        
-        #game-canvas {
-            width: 100%;
-            height: 660px;
-            background: #87CEEB;
-            border-radius: 15px;
-            border: 4px solid #1E3A8A;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-            display: block;
-            margin: 0 auto;
-        }
-        
-        .hud {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            color: white;
-            font-size: 20px;
-            font-weight: bold;
-            text-shadow: 2px 2px 0 #000;
-            z-index: 10;
-            background: rgba(0, 0, 0, 0.5);
-            padding: 10px 15px;
-            border-radius: 10px;
-        }
-        
-        .controls {
-            margin-top: 20px;
-            display: flex;
-            justify-content: center;
-            gap: 20px;
-        }
-        
-        .mobile-controls {
-            display: none;
-            width: 100%;
-            max-width: 440px;
-            margin-top: 20px;
-            padding: 15px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 20px;
-            backdrop-filter: blur(10px);
-        }
-        
-        .btn-row {
-            display: flex;
-            justify-content: space-between;
-            gap: 10px;
-            margin-bottom: 10px;
-        }
-        
-        .mobile-btn {
-            flex: 1;
-            padding: 20px;
-            border: none;
-            border-radius: 15px;
-            background: linear-gradient(145deg, #2d3047, #252738);
-            color: white;
-            font-size: 20px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: all 0.1s;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-        }
-        
-        .mobile-btn:active {
-            transform: scale(0.95);
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-        }
-        
-        .left-btn {
-            background: linear-gradient(145deg, #6495ED, #4169E1);
-            border: 3px solid #1E3A8A;
-        }
-        
-        .right-btn {
-            background: linear-gradient(145deg, #6495ED, #4169E1);
-            border: 3px solid #1E3A8A;
-        }
-        
-        .jump-btn {
-            background: linear-gradient(145deg, #FF6B6B, #FF3232);
-            border: 3px solid #8B0000;
-            font-size: 24px;
-        }
-        
-        @media (max-width: 768px) {
-            .mobile-controls {
-                display: block;
-            }
-            
-            #game-canvas {
-                height: 600px;
-            }
-            
-            .game-title {
-                font-size: 36px;
-            }
-        }
-        
-        @media (max-width: 480px) {
-            #game-canvas {
-                height: 500px;
-            }
-            
-            .game-title {
-                font-size: 30px;
-            }
-            
-            .mobile-btn {
-                padding: 15px;
-                font-size: 18px;
-            }
-        }
-        
-        .instructions {
-            margin-top: 15px;
-            color: #1E3A8A;
-            font-size: 14px;
-            text-align: center;
-        }
-        
-        .game-over {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.8);
-            display: none;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            z-index: 100;
-        }
-        
-        .game-over-content {
-            background: white;
-            padding: 30px;
-            border-radius: 20px;
-            text-align: center;
-            max-width: 400px;
-            width: 90%;
-        }
-        
-        .game-over h2 {
-            color: #FF3232;
-            font-size: 36px;
-            margin-bottom: 20px;
-        }
-        
-        .restart-btn {
-            background: linear-gradient(145deg, #4ecdc4, #3bb4a2);
-            color: white;
-            border: none;
-            padding: 15px 30px;
-            font-size: 18px;
-            border-radius: 10px;
-            cursor: pointer;
-            margin-top: 20px;
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <div class="header">
-            <div class="game-title">DOODLE JUMP</div>
-            <div class="school-name">ШКОЛА 258</div>
-        </div>
-        
-        <div class="hud">
-            <div>Очки: <span id="score">0</span></div>
-            <div>Рекорд: <span id="high-score">0</span></div>
-            <div id="combo-display" style="display: none;">Комбо: <span id="combo">0</span></div>
-        </div>
-        
-        <canvas id="game-canvas"></canvas>
-        
-        <div class="mobile-controls">
-            <div class="btn-row">
-                <button class="mobile-btn left-btn" id="btn-left">← ЛЕВО</button>
-                <button class="mobile-btn right-btn" id="btn-right">ПРАВО →</button>
-            </div>
-            <button class="mobile-btn jump-btn" id="btn-jump">⬆ ПРЫЖОК</button>
-        </div>
-        
-        <div class="instructions">
-            На компьютере: ← → или A D для движения, ПРОБЕЛ для прыжка<br>
-            На телефоне: используйте кнопки или наклоняйте устройство
-        </div>
-    </div>
+import javafx.animation.AnimationTimer;
+import javafx.application.Application;
+import javafx.application.Platform;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
+import javafx.scene.Scene;
+import javafx.scene.canvas.Canvas;
+import javafx.scene.canvas.GraphicsContext;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Button;
+import javafx.scene.control.Label;
+import javafx.scene.image.Image;
+import javafx.scene.input.KeyCode;
+import javafx.scene.layout.*;
+import javafx.scene.paint.*;
+import javafx.scene.shape.Rectangle;
+import javafx.scene.text.Font;
+import javafx.scene.text.TextAlignment;
+import javafx.stage.Stage;
+
+import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
+
+public class DoodleJump extends Application {
     
-    <div class="game-over" id="game-over">
-        <div class="game-over-content">
-            <h2>ИГРА ОКОНЧЕНА</h2>
-            <p>Ваш счет: <span id="final-score">0</span></p>
-            <p>Рекорд: <span id="final-high-score">0</span></p>
-            <button class="restart-btn" id="restart-btn">ИГРАТЬ СНОВА</button>
-        </div>
-    </div>
-
-    <script>
-        // ==================== КОНСТАНТЫ И НАСТРОЙКИ ====================
-        const GAME_WIDTH = 440;
-        const GAME_HEIGHT = 660;
-        const GRAVITY = 0.4;
-        const JUMP_FORCE = 10;
-        const PLAYER_WIDTH = 45;
-        const PLAYER_HEIGHT = 60;
-        const PLATFORM_WIDTH = 70;
-        const PLATFORM_HEIGHT = 20;
-        const SCROLL_THRESHOLD = 220;
-        const MIN_HEIGHT_FOR_SCORE = 55;
-        const MIN_PLATFORM_DISTANCE = 80;
-
-        // Цвета как в PyGame версии
-        const COLORS = {
-            WHITE: '#FFFFFF',
-            BLACK: '#000000',
-            YELLOW: '#FFFF00',
-            ORANGE: '#FFA500',
-            RED: '#FF3232',
-            GREEN: '#32FF32',
-            BLUE: '#4169E1',
-            PURPLE: '#B446DC',
-            BACKGROUND: '#87CEEB',
-            DARK_BLUE: '#1E3A8A',
-            LIGHT_BLUE: '#6495ED',
-            PINK: '#FF96C8',
-            SCHOOL_YELLOW: '#FFDC64',
-            SCHOOL_BROWN: '#966432',
-            GRAY: '#808080',
-            GLOW: '#FFFF96'
-        };
-
-        // ==================== ИНИЦИАЛИЗАЦИЯ ====================
-        const canvas = document.getElementById('game-canvas');
-        const ctx = canvas.getContext('2d');
-        canvas.width = GAME_WIDTH;
-        canvas.height = GAME_HEIGHT;
-
-        // ==================== КЛАССЫ ИГРЫ ====================
-        class ScoreSystem {
-            constructor() {
-                this.score = 0;
-                this.highScore = localStorage.getItem('doodleHighScore') || 0;
-                this.combo = 0;
-                this.maxCombo = 0;
-                this.multiplier = 1.0;
-                this.lastPlatformY = GAME_HEIGHT - 100;
+    // Константы - увеличены на 10%
+    public static final int WIDTH = 440;
+    public static final int HEIGHT = 660;
+    public static final int FPS = 60;
+    public static final double GRAVITY = 0.4;
+    public static final double JUMP_FORCE = 10;
+    public static final int PLATFORM_WIDTH = 70;
+    public static final int PLATFORM_HEIGHT = 20;
+    public static final int PLAYER_WIDTH = 45;
+    public static final int PLAYER_HEIGHT = 60;
+    public static final int SCROLL_THRESHOLD = 220;
+    public static final int MIN_HEIGHT_FOR_SCORE = 55;
+    public static final int MIN_PLATFORM_DISTANCE = 80;
+    
+    // Цвета
+    public static final Color WHITE = Color.WHITE;
+    public static final Color BLACK = Color.BLACK;
+    public static final Color YELLOW = Color.YELLOW;
+    public static final Color ORANGE = Color.ORANGE;
+    public static final Color RED = Color.rgb(255, 50, 50);
+    public static final Color GREEN = Color.rgb(50, 255, 50);
+    public static final Color BLUE = Color.rgb(50, 100, 255);
+    public static final Color PURPLE = Color.rgb(180, 70, 220);
+    public static final Color BACKGROUND = Color.rgb(135, 206, 235);
+    public static final Color DARK_BLUE = Color.rgb(30, 60, 120);
+    public static final Color LIGHT_BLUE = Color.rgb(100, 200, 255);
+    public static final Color PINK = Color.rgb(255, 150, 200);
+    public static final Color SCHOOL_YELLOW = Color.rgb(255, 220, 100);
+    public static final Color SCHOOL_BROWN = Color.rgb(150, 100, 50);
+    public static final Color GRAY = Color.rgb(100, 100, 100);
+    public static final Color GLOW_COLOR = Color.rgb(255, 255, 150);
+    
+    private Stage primaryStage;
+    private Canvas gameCanvas;
+    private GraphicsContext gc;
+    private ScoreSystem scoreSystem;
+    private Player player;
+    private List<Platform> platforms = new ArrayList<>();
+    private List<FloatingText> floatingTexts = new ArrayList<>();
+    private boolean gameOver = false;
+    private boolean isBoy = true;
+    
+    // Управление
+    private boolean moveLeft = false;
+    private boolean moveRight = false;
+    
+    // Шрифты
+    private Font fontLarge = new Font(48);
+    private Font fontMedium = new Font(36);
+    private Font fontSmall = new Font(24);
+    
+    @Override
+    public void start(Stage primaryStage) {
+        this.primaryStage = primaryStage;
+        showStartScreen();
+    }
+    
+    private void showStartScreen() {
+        StackPane root = new StackPane();
+        root.setStyle("-fx-background-color: linear-gradient(to bottom, #87CEEB, #6495ED);");
+        
+        // Фон школы
+        drawSchoolBackground(root);
+        
+        // Контейнер для элементов
+        VBox container = new VBox(20);
+        container.setAlignment(Pos.TOP_CENTER);
+        container.setPadding(new Insets(30, 0, 0, 0));
+        
+        // Заголовок
+        Label title = new Label("DOODLE JUMP");
+        title.setFont(fontLarge);
+        title.setTextFill(RED);
+        title.setStyle("-fx-font-weight: bold; -fx-effect: dropshadow(gaussian, black, 5, 0.5, 3, 3);");
+        
+        // Подзаголовок
+        Label schoolLabel = new Label("ШКОЛА 258");
+        schoolLabel.setFont(fontMedium);
+        schoolLabel.setTextFill(WHITE);
+        schoolLabel.setStyle("-fx-font-weight: bold; -fx-effect: dropshadow(gaussian, black, 3, 0.5, 2, 2);");
+        
+        // Контейнер для выбора персонажа
+        HBox characterSelection = new HBox(30);
+        characterSelection.setAlignment(Pos.CENTER);
+        
+        // Кнопка мальчика
+        VBox boyBox = createCharacterBox(true, "УЧЕНИК");
+        // Кнопка девочки
+        VBox girlBox = createCharacterBox(false, "УЧЕНИЦА");
+        
+        characterSelection.getChildren().addAll(boyBox, girlBox);
+        
+        // Инструкция
+        Label instruction = new Label("ВЫБЕРИТЕ ПЕРСОНАЖА");
+        instruction.setFont(fontMedium);
+        instruction.setTextFill(DARK_BLUE);
+        
+        // Кнопка начала игры
+        Button startButton = new Button("НАЧАТЬ ИГРУ");
+        startButton.setFont(fontMedium);
+        startButton.setStyle("-fx-background-color: #32CD32; -fx-text-fill: white; -fx-font-weight: bold; " +
+                "-fx-padding: 15 30; -fx-background-radius: 10; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.5), 10, 0, 0, 5);");
+        startButton.setOnAction(e -> startGame(isBoy));
+        
+        // Управление
+        VBox controlsBox = new VBox(10);
+        controlsBox.setAlignment(Pos.CENTER);
+        Label control1 = new Label("← → или A D - Движение");
+        Label control2 = new Label("ПРОБЕЛ - Прыжок");
+        Label control3 = new Label("ESC - Выход");
+        control1.setFont(fontSmall);
+        control2.setFont(fontSmall);
+        control3.setFont(fontSmall);
+        control1.setTextFill(DARK_BLUE);
+        control2.setTextFill(DARK_BLUE);
+        control3.setTextFill(DARK_BLUE);
+        controlsBox.getChildren().addAll(control1, control2, control3);
+        
+        container.getChildren().addAll(title, schoolLabel, instruction, characterSelection, startButton, controlsBox);
+        root.getChildren().add(container);
+        
+        Scene scene = new Scene(root, WIDTH, HEIGHT);
+        scene.setOnKeyPressed(e -> {
+            if (e.getCode() == KeyCode.LEFT) isBoy = true;
+            else if (e.getCode() == KeyCode.RIGHT) isBoy = false;
+            else if (e.getCode() == KeyCode.ENTER || e.getCode() == KeyCode.SPACE) {
+                startGame(isBoy);
+            } else if (e.getCode() == KeyCode.ESCAPE) {
+                Platform.exit();
             }
-
-            addScore(points, reason = "") {
-                const actualPoints = Math.floor(points * this.multiplier);
-                this.score += actualPoints;
-                
-                if (this.score > this.highScore) {
-                    this.highScore = this.score;
-                    localStorage.setItem('doodleHighScore', this.highScore);
-                }
-                
-                return actualPoints;
-            }
-
-            addPlatformHit(platformType, platformY) {
-                const heightDiff = Math.abs(this.lastPlatformY - platformY);
-                
-                if (heightDiff >= MIN_HEIGHT_FOR_SCORE) {
-                    this.combo++;
-                    if (this.combo > this.maxCombo) this.maxCombo = this.combo;
-                    
-                    if (this.combo >= 5) {
-                        this.multiplier = Math.min(3.0, 1.0 + (this.combo - 4) * 0.2);
-                    }
-                    
-                    this.lastPlatformY = platformY;
+        });
+        
+        primaryStage.setTitle("Doodle Jump - Школа 258");
+        primaryStage.setScene(scene);
+        primaryStage.show();
+    }
+    
+    private VBox createCharacterBox(boolean isBoy, String labelText) {
+        VBox box = new VBox(10);
+        box.setAlignment(Pos.CENTER);
+        
+        // Рамка
+        Rectangle frame = new Rectangle(150, 180);
+        frame.setArcWidth(20);
+        frame.setArcHeight(20);
+        frame.setFill(LIGHT_BLUE);
+        frame.setStroke(isBoy ? BLUE : PINK);
+        frame.setStrokeWidth(isBoy ? 4 : 2);
+        
+        // Изображение персонажа (заглушка)
+        Rectangle character = new Rectangle(120, 160);
+        character.setArcWidth(15);
+        character.setArcHeight(15);
+        character.setFill(isBoy ? Color.rgb(100, 150, 255) : Color.rgb(255, 150, 200));
+        
+        // Подпись
+        Label label = new Label(labelText);
+        label.setFont(fontMedium);
+        label.setTextFill(WHITE);
+        
+        box.getChildren().addAll(frame, character, label);
+        
+        // Обработчик клика
+        box.setOnMouseClicked(e -> {
+            this.isBoy = isBoy;
+            // Обновляем рамки
+            for (var child : ((HBox) box.getParent()).getChildren()) {
+                VBox vbox = (VBox) child;
+                Rectangle rect = (Rectangle) vbox.getChildren().get(0);
+                if (vbox == box) {
+                    rect.setStroke(isBoy ? BLUE : PINK);
+                    rect.setStrokeWidth(4);
                 } else {
-                    this.combo = 0;
-                    this.multiplier = 1.0;
+                    rect.setStrokeWidth(2);
                 }
-
-                let points = 0;
-                switch(platformType) {
-                    case 'normal': points = 10; break;
-                    case 'moving': points = 20; break;
-                    case 'breaking': points = 30; break;
-                    case 'spring': points = 15; break;
-                }
-
-                points += this.combo * 2;
-                return this.addScore(points, `платформа ${platformType}`);
-            }
-
-            addPerfectLanding() {
-                return this.addScore(50, "идеальное приземление!");
-            }
-
-            reset() {
-                this.score = 0;
-                this.combo = 0;
-                this.multiplier = 1.0;
-                this.lastPlatformY = GAME_HEIGHT - 100;
-            }
-        }
-
-        class Platform {
-            constructor(x, y, type = 'normal') {
-                this.x = x;
-                this.y = y;
-                this.width = PLATFORM_WIDTH;
-                this.height = PLATFORM_HEIGHT;
-                this.type = type;
-                this.direction = type === 'moving' ? (Math.random() > 0.5 ? 1 : -1) : 0;
-                this.speed = type === 'moving' ? 1 + Math.random() : 0;
-                this.landAnimation = 0;
-                this.breaking = false;
-                this.springUsed = false;
-            }
-
-            update() {
-                if (this.type === 'moving') {
-                    this.x += this.direction * this.speed;
-                    if (this.x <= 0 || this.x + this.width >= GAME_WIDTH) {
-                        this.direction *= -1;
-                    }
-                }
-
-                if (this.landAnimation > 0) {
-                    this.landAnimation--;
-                }
-
-                return !(this.breaking && this.landAnimation <= 0);
-            }
-
-            onLand(scoreSystem) {
-                this.landAnimation = 10;
-                if (this.type === 'breaking') {
-                    this.breaking = true;
-                }
-                if (this.type === 'spring') {
-                    this.springUsed = true;
-                }
-                return scoreSystem.addPlatformHit(this.type, this.y);
-            }
-
-            draw() {
-                ctx.save();
-                
-                let color;
-                switch(this.type) {
-                    case 'normal': color = COLORS.GREEN; break;
-                    case 'moving': color = COLORS.PURPLE; break;
-                    case 'breaking': color = COLORS.RED; break;
-                    case 'spring': color = COLORS.YELLOW; break;
-                }
-
-                if (this.breaking && this.landAnimation > 0) {
-                    const scale = this.landAnimation / 10;
-                    const width = this.width * scale;
-                    const height = this.height * scale;
-                    
-                    ctx.fillStyle = color;
-                    ctx.fillRect(
-                        this.x + (this.width - width) / 2,
-                        this.y + (this.height - height) / 2,
-                        width,
-                        height
-                    );
-                } else if (this.landAnimation > 0) {
-                    const scaleY = 1.0 + 0.1 * (this.landAnimation / 10);
-                    const height = this.height * scaleY;
-                    
-                    ctx.fillStyle = color;
-                    ctx.fillRect(
-                        this.x,
-                        this.y - (height - this.height) / 2,
-                        this.width,
-                        height
-                    );
-                } else {
-                    // Рисуем карандаш (платформу)
-                    this.drawPencil(color);
-                }
-
-                ctx.restore();
-            }
-
-            drawPencil(color) {
-                // Основная часть карандаша
-                ctx.fillStyle = color;
-                this.roundRect(this.x, this.y, this.width, this.height, 5);
-                ctx.fill();
-                
-                // Контур
-                ctx.strokeStyle = COLORS.BLACK;
-                ctx.lineWidth = 2;
-                this.roundRect(this.x, this.y, this.width, this.height, 5);
-                ctx.stroke();
-
-                // Грифель (слева)
-                ctx.fillStyle = COLORS.GRAY;
-                ctx.beginPath();
-                ctx.moveTo(this.x, this.y + this.height / 2 - 3);
-                ctx.lineTo(this.x + 12, this.y);
-                ctx.lineTo(this.x + 12, this.y + this.height);
-                ctx.closePath();
-                ctx.fill();
-                ctx.stroke();
-
-                // Линия отделяющая грифель
-                ctx.beginPath();
-                ctx.moveTo(this.x + 12, this.y);
-                ctx.lineTo(this.x + 12, this.y + this.height);
-                ctx.stroke();
-
-                // Полоски на карандаше
-                ctx.strokeStyle = COLORS.WHITE;
-                ctx.lineWidth = 1;
-                for (let i = 0; i < 3; i++) {
-                    const y = this.y + 4 + i * 4;
-                    ctx.beginPath();
-                    ctx.moveTo(this.x + 15, y);
-                    ctx.lineTo(this.x + this.width - 5, y);
-                    ctx.stroke();
-                }
-
-                // Особенности платформ
-                if (this.type === 'moving') {
-                    ctx.fillStyle = COLORS.WHITE;
-                    ctx.beginPath();
-                    ctx.arc(this.x + this.width / 2, this.y + this.height / 2, 3, 0, Math.PI * 2);
-                    ctx.fill();
-                    ctx.stroke();
-                } else if (this.type === 'breaking') {
-                    ctx.strokeStyle = COLORS.BLACK;
-                    ctx.lineWidth = 2;
-                    
-                    // Трещина 1
-                    ctx.beginPath();
-                    ctx.moveTo(this.x + 25, this.y + 5);
-                    ctx.lineTo(this.x + 35, this.y + 15);
-                    ctx.lineTo(this.x + 45, this.y + 5);
-                    ctx.stroke();
-                    
-                    // Трещина 2
-                    ctx.beginPath();
-                    ctx.moveTo(this.x + 55, this.y + 15);
-                    ctx.lineTo(this.x + 65, this.y + 5);
-                    ctx.lineTo(this.x + 75, this.y + 15);
-                    ctx.stroke();
-                } else if (this.type === 'spring') {
-                    ctx.strokeStyle = COLORS.BLACK;
-                    ctx.lineWidth = 2;
-                    ctx.beginPath();
-                    for (let i = 0; i < 5; i++) {
-                        const x = this.x + 25 + i * 8;
-                        const y = this.y + (i % 2 === 0 ? 5 : 15);
-                        if (i === 0) ctx.moveTo(x, y);
-                        else ctx.lineTo(x, y);
-                    }
-                    ctx.stroke();
-                }
-            }
-
-            roundRect(x, y, width, height, radius) {
-                ctx.beginPath();
-                ctx.moveTo(x + radius, y);
-                ctx.lineTo(x + width - radius, y);
-                ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
-                ctx.lineTo(x + width, y + height - radius);
-                ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
-                ctx.lineTo(x + radius, y + height);
-                ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
-                ctx.lineTo(x, y + radius);
-                ctx.quadraticCurveTo(x, y, x + radius, y);
-                ctx.closePath();
-            }
-        }
-
-        class Player {
-            constructor(isBoy = true) {
-                this.x = GAME_WIDTH / 2 - PLAYER_WIDTH / 2;
-                this.y = GAME_HEIGHT - 200;
-                this.width = PLAYER_WIDTH;
-                this.height = PLAYER_HEIGHT;
-                this.velocityY = 0;
-                this.jumping = false;
-                this.direction = 1; // 1 = вправо, -1 = влево
-                this.isBoy = isBoy;
-                this.lastPlatform = null;
-                this.justJumped = false;
-                this.animationTimer = 0;
-                this.walkAnimation = false;
-            }
-
-            update(platforms, scoreSystem) {
-                this.justJumped = false;
-                this.velocityY += GRAVITY;
-                this.y += this.velocityY;
-
-                this.animationTimer++;
-                this.walkAnimation = keys.LEFT || keys.RIGHT;
-
-                // Проверка столкновений с платформами
-                for (const platform of platforms) {
-                    if (this.velocityY > 0) {
-                        if (this.y + this.height >= platform.y &&
-                            this.y + this.height <= platform.y + 10 &&
-                            this.x + this.width > platform.x &&
-                            this.x < platform.x + platform.width) {
-
-                            const playerCenter = this.x + this.width / 2;
-                            const platformCenter = platform.x + platform.width / 2;
-                            const distance = Math.abs(playerCenter - platformCenter);
-
-                            let perfectBonus = 0;
-                            if (distance < 10 && platform !== this.lastPlatform) {
-                                perfectBonus = scoreSystem.addPerfectLanding();
-                            }
-
-                            const pointsAdded = platform.onLand(scoreSystem);
-
-                            if (platform.type === 'spring') {
-                                this.jump(JUMP_FORCE * 1.5);
-                            } else {
-                                this.jump();
-                            }
-
-                            this.justJumped = true;
-                            this.lastPlatform = platform;
-                            
-                            return { points: pointsAdded + perfectBonus, x: platform.x + platform.width / 2, y: platform.y };
-                        }
-                    }
-                }
-
-                // Выход за границы экрана (телепортация)
-                if (this.x > GAME_WIDTH) {
-                    this.x = -this.width;
-                } else if (this.x + this.width < 0) {
-                    this.x = GAME_WIDTH;
-                }
-
-                // Падение за нижнюю границу
-                if (this.y > GAME_HEIGHT) {
-                    return null;
-                }
-
-                return { points: 0, x: 0, y: 0 };
-            }
-
-            jump(force = JUMP_FORCE) {
-                this.velocityY = -force;
-                this.jumping = true;
-            }
-
-            move(direction) {
-                this.x += direction * 8;
-                this.direction = direction;
-            }
-
-            draw() {
-                ctx.save();
-                
-                // Цвет игрока в зависимости от пола
-                const playerColor = this.isBoy ? '#6495ED' : '#FF96C8';
-                
-                // Анимация прыжка
-                if (this.jumping && this.velocityY < 0) {
-                    const scaleFactor = 1.0 + Math.abs(this.velocityY) * 0.01;
-                    const scaledWidth = this.width * scaleFactor;
-                    const scaledHeight = this.height * scaleFactor;
-                    
-                    ctx.fillStyle = playerColor;
-                    ctx.fillRect(
-                        this.x - (scaledWidth - this.width) / 2,
-                        this.y - (scaledHeight - this.height),
-                        scaledWidth,
-                        scaledHeight
-                    );
-                    
-                    // Контур
-                    ctx.strokeStyle = COLORS.BLACK;
-                    ctx.lineWidth = 2;
-                    ctx.strokeRect(
-                        this.x - (scaledWidth - this.width) / 2,
-                        this.y - (scaledHeight - this.height),
-                        scaledWidth,
-                        scaledHeight
-                    );
-                }
-                // Анимация ходьбы
-                else if (this.walkAnimation && this.velocityY >= 0) {
-                    const bounce = Math.sin(this.animationTimer * 0.3) * 2;
-                    
-                    ctx.fillStyle = playerColor;
-                    ctx.fillRect(this.x, this.y + bounce, this.width, this.height);
-                    
-                    ctx.strokeStyle = COLORS.BLACK;
-                    ctx.lineWidth = 2;
-                    ctx.strokeRect(this.x, this.y + bounce, this.width, this.height);
-                }
-                // Обычное состояние
-                else {
-                    ctx.fillStyle = playerColor;
-                    ctx.fillRect(this.x, this.y, this.width, this.height);
-                    
-                    ctx.strokeStyle = COLORS.BLACK;
-                    ctx.lineWidth = 2;
-                    ctx.strokeRect(this.x, this.y, this.width, this.height);
-                }
-
-                // Лицо
-                ctx.fillStyle = '#FFE4C4'; // Цвет кожи
-                ctx.beginPath();
-                ctx.arc(this.x + this.width / 2, this.y + 20, 12, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.stroke();
-
-                // Глаза
-                ctx.fillStyle = COLORS.BLACK;
-                ctx.beginPath();
-                const eyeOffset = this.direction > 0 ? -3 : 3;
-                ctx.arc(this.x + this.width / 2 - 5 + eyeOffset, this.y + 18, 2, 0, Math.PI * 2);
-                ctx.arc(this.x + this.width / 2 + 5 + eyeOffset, this.y + 18, 2, 0, Math.PI * 2);
-                ctx.fill();
-
-                // Улыбка
-                ctx.beginPath();
-                ctx.arc(this.x + this.width / 2 + eyeOffset, this.y + 25, 6, 0.2, Math.PI - 0.2);
-                ctx.stroke();
-
-                // Рюкзак
-                ctx.fillStyle = this.isBoy ? COLORS.DARK_BLUE : COLORS.PINK;
-                ctx.fillRect(this.x + 5, this.y + this.height - 15, 15, 12);
-                ctx.strokeRect(this.x + 5, this.y + this.height - 15, 15, 12);
-
-                ctx.restore();
-
-                if (this.velocityY >= 0) {
-                    this.jumping = false;
-                }
-            }
-        }
-
-        // ==================== ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ====================
-        let scoreSystem = new ScoreSystem();
-        let player = new Player(true);
-        let platforms = [];
-        let gameOver = false;
-        let lastTime = 0;
-        let floatingTexts = [];
-        let keys = {
-            LEFT: false,
-            RIGHT: false,
-            SPACE: false
-        };
-
-        // ==================== ФУНКЦИИ ИГРЫ ====================
-        function generateInitialPlatforms() {
-            platforms = [];
-            
-            // Первая платформа под игроком
-            platforms.push(new Platform(
-                GAME_WIDTH / 2 - PLATFORM_WIDTH / 2,
-                GAME_HEIGHT - 100,
-                'normal'
-            ));
-
-            let currentY = GAME_HEIGHT - 150;
-
-            for (let i = 0; i < 19; i++) {
-                const rand = Math.random();
-                let platformType = 'normal';
-                
-                if (rand < 0.1) platformType = 'breaking';
-                else if (rand < 0.2) platformType = 'spring';
-                else if (rand < 0.4) platformType = 'moving';
-
-                let x, y;
-                let attempts = 0;
-                
-                do {
-                    x = Math.random() * (GAME_WIDTH - PLATFORM_WIDTH);
-                    y = currentY - 80 + Math.random() * 40;
-                    attempts++;
-                } while (!isValidPosition(x, y) && attempts < 50);
-
-                platforms.push(new Platform(x, y, platformType));
-                currentY = y;
-            }
-        }
-
-        function isValidPosition(x, y) {
-            if (x < 0 || x + PLATFORM_WIDTH > GAME_WIDTH) return false;
-
-            for (const platform of platforms) {
-                const verticalDistance = Math.abs(y - platform.y);
-                if (verticalDistance < MIN_PLATFORM_DISTANCE) {
-                    if (!(x + PLATFORM_WIDTH < platform.x || x > platform.x + platform.width)) {
-                        return false;
-                    }
-                }
-            }
-
-            return true;
-        }
-
-        function generateNewPlatforms() {
-            // Обновляем платформы
-            platforms = platforms.filter(p => p.update());
-            platforms = platforms.filter(p => p.y < GAME_HEIGHT + 100);
-
-            // Добавляем новые платформы
-            while (platforms.length < 15) {
-                let minY, maxY;
-                
-                if (platforms.length > 0) {
-                    const highestPlatform = platforms.reduce((min, p) => p.y < min.y ? p : min);
-                    minY = highestPlatform.y - 120;
-                    maxY = highestPlatform.y - 60;
-                } else {
-                    minY = -150;
-                    maxY = -80;
-                }
-
-                const rand = Math.random();
-                let platformType = 'normal';
-                
-                if (rand < 0.15) platformType = 'breaking';
-                else if (rand < 0.3) platformType = 'spring';
-                else if (rand < 0.5) platformType = 'moving';
-
-                let x, y;
-                let attempts = 0;
-                
-                do {
-                    x = Math.random() * (GAME_WIDTH - PLATFORM_WIDTH);
-                    y = minY + Math.random() * (maxY - minY);
-                    attempts++;
-                } while (!isValidPosition(x, y) && attempts < 50);
-
-                platforms.push(new Platform(x, y, platformType));
-            }
-        }
-
-        function drawBackground() {
-            // Градиентное небо
-            const gradient = ctx.createLinearGradient(0, 0, 0, GAME_HEIGHT);
-            gradient.addColorStop(0, '#87CEEB');
-            gradient.addColorStop(1, '#6495ED');
-            ctx.fillStyle = gradient;
-            ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
-
-            // Облака
-            drawClouds();
-        }
-
-        function drawClouds() {
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
-            
-            // Статичные облака на заднем плане
-            ctx.beginPath();
-            ctx.arc(100, 100, 30, 0, Math.PI * 2);
-            ctx.arc(140, 90, 25, 0, Math.PI * 2);
-            ctx.arc(130, 120, 20, 0, Math.PI * 2);
-            ctx.fill();
-            
-            ctx.beginPath();
-            ctx.arc(350, 150, 25, 0, Math.PI * 2);
-            ctx.arc(380, 140, 30, 0, Math.PI * 2);
-            ctx.arc(370, 170, 20, 0, Math.PI * 2);
-            ctx.fill();
-        }
-
-        function drawHUD() {
-            ctx.fillStyle = COLORS.WHITE;
-            ctx.font = 'bold 20px Arial';
-            ctx.textAlign = 'left';
-            ctx.fillText(`Очки: ${scoreSystem.score}`, 20, 40);
-            
-            ctx.fillStyle = COLORS.YELLOW;
-            ctx.fillText(`Рекорд: ${scoreSystem.highScore}`, 20, 70);
-
-            if (scoreSystem.combo > 0) {
-                ctx.fillStyle = COLORS.ORANGE;
-                ctx.font = 'bold 16px Arial';
-                ctx.fillText(`Комбо: ${scoreSystem.combo}`, 20, 100);
-            }
-
-            if (scoreSystem.multiplier > 1.0) {
-                ctx.fillStyle = '#FF69B4';
-                ctx.fillText(`Множитель: x${scoreSystem.multiplier.toFixed(1)}`, 20, 130);
-            }
-        }
-
-        // ==================== ИГРОВОЙ ЦИКЛ ====================
-        function gameLoop(timestamp) {
-            const deltaTime = timestamp - lastTime;
-            lastTime = timestamp;
-
-            if (!gameOver) {
-                updateGame(deltaTime);
-            }
-
-            drawGame();
-            requestAnimationFrame(gameLoop);
-        }
-
-        function updateGame(deltaTime) {
-            // Обновление игрока
-            const result = player.update(platforms, scoreSystem);
-            
-            if (result === null) {
-                endGame();
-                return;
-            }
-
-            if (result.points > 0) {
-                addFloatingText(`+${result.points}`, result.x, result.y - 20, COLORS.YELLOW);
-                
-                if (scoreSystem.combo >= 3) {
-                    addFloatingText(`КОМБО x${scoreSystem.combo}!`, result.x, result.y - 40, COLORS.ORANGE);
-                }
-
-                if (scoreSystem.multiplier > 1.0) {
-                    addFloatingText(`x${scoreSystem.multiplier.toFixed(1)}`, result.x, result.y - 60, '#FF69B4');
-                }
-            }
-
-            // Прокрутка мира
-            if (player.y < SCROLL_THRESHOLD && player.velocityY < 0) {
-                const scrollAmount = SCROLL_THRESHOLD - player.y;
-
-                if (scrollAmount >= MIN_HEIGHT_FOR_SCORE) {
-                    const heightBonus = Math.floor(scrollAmount / 10);
-                    scoreSystem.addScore(heightBonus, "бонус за высоту");
-                    
-                    addFloatingText(
-                        `+${heightBonus}`,
-                        player.x + player.width / 2,
-                        player.y - 30,
-                        COLORS.DARK_BLUE
-                    );
-                }
-
-                player.y += scrollAmount;
-                platforms.forEach(platform => platform.y += scrollAmount);
-            }
-
-            // Обновление платформ
-            generateNewPlatforms();
-
-            // Управление
-            if (keys.LEFT) player.move(-1);
-            if (keys.RIGHT) player.move(1);
-
-            // Обновление плавающего текста
-            floatingTexts = floatingTexts.filter(text => text.update());
-        }
-
-        function drawGame() {
-            // Очистка canvas
-            ctx.clearRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
-            
-            // Рисуем фон
-            drawBackground();
-            
-            // Рисуем платформы
-            platforms.forEach(platform => platform.draw());
-            
-            // Рисуем игрока
-            player.draw();
-            
-            // Рисуем плавающий текст
-            floatingTexts.forEach(text => text.draw());
-            
-            // Рисуем HUD
-            drawHUD();
-            
-            // Если игра окончена
-            if (gameOver) {
-                ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-                ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
-                
-                ctx.fillStyle = COLORS.WHITE;
-                ctx.font = 'bold 48px Arial';
-                ctx.textAlign = 'center';
-                ctx.fillText('GAME OVER', GAME_WIDTH / 2, GAME_HEIGHT / 2);
-            }
-        }
-
-        // ==================== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ====================
-        class FloatingText {
-            constructor(text, x, y, color = COLORS.WHITE, size = 24, duration = 60) {
-                this.text = text;
-                this.x = x;
-                this.y = y;
-                this.color = color;
-                this.size = size;
-                this.duration = duration;
-                this.timer = 0;
-                this.alpha = 1;
-            }
-
-            update() {
-                this.timer++;
-                this.y -= 1;
-                this.alpha = Math.max(0, 1 - this.timer / this.duration);
-                return this.timer < this.duration;
-            }
-
-            draw() {
-                ctx.save();
-                ctx.globalAlpha = this.alpha;
-                ctx.fillStyle = this.color;
-                ctx.font = `bold ${this.size}px Arial`;
-                ctx.textAlign = 'center';
-                ctx.fillText(this.text, this.x, this.y);
-                ctx.restore();
-            }
-        }
-
-        function addFloatingText(text, x, y, color, size = 24) {
-            floatingTexts.push(new FloatingText(text, x, y, color, size));
-        }
-
-        function endGame() {
-            gameOver = true;
-            document.getElementById('final-score').textContent = scoreSystem.score;
-            document.getElementById('final-high-score').textContent = scoreSystem.highScore;
-            document.getElementById('game-over').style.display = 'flex';
-        }
-
-        function restartGame() {
-            scoreSystem.reset();
-            player = new Player(true);
-            platforms = [];
-            floatingTexts = [];
-            gameOver = false;
-            generateInitialPlatforms();
-            document.getElementById('game-over').style.display = 'none';
-            updateScoreDisplay();
-        }
-
-        function updateScoreDisplay() {
-            document.getElementById('score').textContent = scoreSystem.score;
-            document.getElementById('high-score').textContent = scoreSystem.highScore;
-            document.getElementById('combo').textContent = scoreSystem.combo;
-            document.getElementById('combo-display').style.display = scoreSystem.combo > 0 ? 'block' : 'none';
-        }
-
-        // ==================== УПРАВЛЕНИЕ ====================
-        // Клавиатура
-        document.addEventListener('keydown', (e) => {
-            switch(e.code) {
-                case 'ArrowLeft':
-                case 'KeyA':
-                    keys.LEFT = true;
-                    break;
-                case 'ArrowRight':
-                case 'KeyD':
-                    keys.RIGHT = true;
-                    break;
-                case 'Space':
-                    if (!gameOver && !keys.SPACE) {
-                        player.jump();
-                        keys.SPACE = true;
-                    }
-                    break;
-                case 'KeyR':
-                    if (gameOver) restartGame();
-                    break;
             }
         });
-
-        document.addEventListener('keyup', (e) => {
-            switch(e.code) {
-                case 'ArrowLeft':
-                case 'KeyA':
-                    keys.LEFT = false;
-                    break;
-                case 'ArrowRight':
-                case 'KeyD':
-                    keys.RIGHT = false;
-                    break;
-                case 'Space':
-                    keys.SPACE = false;
-                    break;
-            }
-        });
-
-        // Мобильные кнопки
-        document.getElementById('btn-left').addEventListener('touchstart', (e) => {
-            e.preventDefault();
-            keys.LEFT = true;
-        });
-        document.getElementById('btn-left').addEventListener('touchend', () => {
-            keys.LEFT = false;
-        });
-
-        document.getElementById('btn-right').addEventListener('touchstart', (e) => {
-            e.preventDefault();
-            keys.RIGHT = true;
-        });
-        document.getElementById('btn-right').addEventListener('touchend', () => {
-            keys.RIGHT = false;
-        });
-
-        document.getElementById('btn-jump').addEventListener('touchstart', (e) => {
-            e.preventDefault();
-            if (!gameOver && !keys.SPACE) {
+        
+        return box;
+    }
+    
+    private void drawSchoolBackground(Pane root) {
+        // Здание школы
+        Rectangle building = new Rectangle(200, 120);
+        building.setFill(SCHOOL_YELLOW);
+        building.setStroke(SCHOOL_BROWN);
+        building.setStrokeWidth(3);
+        building.setX((WIDTH - 200) / 2);
+        building.setY(100);
+        
+        // Крыша
+        javafx.scene.shape.Polygon roof = new javafx.scene.shape.Polygon();
+        roof.getPoints().addAll(
+            (double) (WIDTH/2 - 110), 100.0,
+            (double) (WIDTH/2 + 110), 100.0,
+            (double) WIDTH/2, 70.0
+        );
+        roof.setFill(RED);
+        roof.setStroke(BLACK);
+        roof.setStrokeWidth(2);
+        
+        // Окно
+        Rectangle window = new Rectangle(40, 30);
+        window.setFill(LIGHT_BLUE);
+        window.setStroke(BLACK);
+        window.setStrokeWidth(2);
+        window.setX(WIDTH/2 - 20);
+        window.setY(130);
+        
+        // Дверь
+        Rectangle door = new Rectangle(30, 60);
+        door.setFill(SCHOOL_BROWN);
+        door.setStroke(BLACK);
+        door.setStrokeWidth(2);
+        door.setX(WIDTH/2 + 50);
+        door.setY(160);
+        
+        // Надпись "ШКОЛА 258"
+        Label schoolText = new Label("ШКОЛА 258");
+        schoolText.setFont(fontMedium);
+        schoolText.setTextFill(WHITE);
+        schoolText.setLayoutX(WIDTH/2 - 70);
+        schoolText.setLayoutY(60);
+        schoolText.setStyle("-fx-effect: dropshadow(gaussian, black, 3, 0.5, 2, 2);");
+        
+        root.getChildren().addAll(building, roof, window, door, schoolText);
+    }
+    
+    private void startGame(boolean isBoy) {
+        scoreSystem = new ScoreSystem();
+        player = new Player(isBoy);
+        platforms.clear();
+        floatingTexts.clear();
+        gameOver = false;
+        
+        generateInitialPlatforms();
+        
+        // Создаем игровой интерфейс
+        BorderPane gameRoot = new BorderPane();
+        gameRoot.setStyle("-fx-background-color: #87CEEB;");
+        
+        gameCanvas = new Canvas(WIDTH, HEIGHT);
+        gc = gameCanvas.getGraphicsContext2D();
+        
+        gameRoot.setCenter(gameCanvas);
+        
+        // HUD для отображения счета
+        HBox hud = new HBox(20);
+        hud.setPadding(new Insets(10));
+        hud.setAlignment(Pos.TOP_LEFT);
+        
+        Label scoreLabel = new Label("Очки: 0");
+        scoreLabel.setFont(fontMedium);
+        scoreLabel.setTextFill(YELLOW);
+        scoreLabel.setStyle("-fx-effect: dropshadow(gaussian, black, 3, 0.5, 2, 2);");
+        
+        Label highScoreLabel = new Label("Рекорд: 0");
+        highScoreLabel.setFont(fontMedium);
+        highScoreLabel.setTextFill(YELLOW);
+        highScoreLabel.setStyle("-fx-effect: dropshadow(gaussian, black, 3, 0.5, 2, 2);");
+        
+        hud.getChildren().addAll(scoreLabel, highScoreLabel);
+        gameRoot.setTop(hud);
+        
+        Scene gameScene = new Scene(gameRoot, WIDTH, HEIGHT);
+        
+        // Обработка ввода
+        gameScene.setOnKeyPressed(e -> {
+            if (e.getCode() == KeyCode.LEFT || e.getCode() == KeyCode.A) {
+                moveLeft = true;
+            } else if (e.getCode() == KeyCode.RIGHT || e.getCode() == KeyCode.D) {
+                moveRight = true;
+            } else if (e.getCode() == KeyCode.SPACE && !gameOver) {
                 player.jump();
-                keys.SPACE = true;
+            } else if (e.getCode() == KeyCode.R && gameOver) {
+                restartGame();
+            } else if (e.getCode() == KeyCode.ESCAPE) {
+                scoreSystem.saveHighScore();
+                Platform.exit();
             }
         });
-        document.getElementById('btn-jump').addEventListener('touchend', () => {
-            keys.SPACE = false;
+        
+        gameScene.setOnKeyReleased(e -> {
+            if (e.getCode() == KeyCode.LEFT || e.getCode() == KeyCode.A) {
+                moveLeft = false;
+            } else if (e.getCode() == KeyCode.RIGHT || e.getCode() == KeyCode.D) {
+                moveRight = false;
+            }
         });
-
-        // Акселерометр для телефона
-        if (window.DeviceOrientationEvent) {
-            window.addEventListener('deviceorientation', (e) => {
-                if (gameOver) return;
-                
-                const tilt = e.gamma; // -90 до 90 градусов
-                
-                if (tilt < -10) {
-                    keys.LEFT = true;
-                    keys.RIGHT = false;
-                } else if (tilt > 10) {
-                    keys.RIGHT = true;
-                    keys.LEFT = false;
-                } else {
-                    keys.LEFT = false;
-                    keys.RIGHT = false;
+        
+        primaryStage.setScene(gameScene);
+        
+        // Запуск игрового цикла
+        AnimationTimer gameLoop = new AnimationTimer() {
+            private long lastUpdate = 0;
+            
+            @Override
+            public void handle(long now) {
+                if (lastUpdate == 0) {
+                    lastUpdate = now;
+                    return;
                 }
-            });
-        }
-
-        // Кнопка перезапуска
-        document.getElementById('restart-btn').addEventListener('click', restartGame);
-
-        // Предотвращение стандартного поведения
-        document.addEventListener('touchmove', (e) => {
-            if (e.target.classList.contains('mobile-btn')) {
-                e.preventDefault();
+                
+                double deltaTime = (now - lastUpdate) / 1_000_000_000.0; // в секундах
+                if (deltaTime < 1.0 / FPS) return;
+                
+                update(deltaTime);
+                draw();
+                
+                // Обновляем HUD
+                scoreLabel.setText("Очки: " + scoreSystem.getScore());
+                highScoreLabel.setText("Рекорд: " + scoreSystem.getHighScore());
+                
+                lastUpdate = now;
             }
-        }, { passive: false });
-
-        // ==================== ЗАПУСК ИГРЫ ====================
-        function init() {
-            generateInitialPlatforms();
-            updateScoreDisplay();
-            requestAnimationFrame(gameLoop);
-            console.log('Doodle Jump запущен!');
+        };
+        
+        gameLoop.start();
+    }
+    
+    private void update(double deltaTime) {
+        if (gameOver) return;
+        
+        scoreSystem.update();
+        
+        // Управление
+        if (moveLeft) player.move(-1);
+        if (moveRight) player.move(1);
+        
+        // Обновление игрока
+        Player.UpdateResult result = player.update(platforms, scoreSystem);
+        
+        if (result == null) {
+            gameOver();
+            return;
         }
+        
+        if (result.points > 0) {
+            floatingTexts.add(new FloatingText(
+                "+" + result.points,
+                result.x, result.y - 20,
+                YELLOW, 24
+            ));
+            
+            if (scoreSystem.getCombo() >= 3) {
+                floatingTexts.add(new FloatingText(
+                    "КОМБО x" + scoreSystem.getCombo() + "!",
+                    result.x, result.y - 40,
+                    ORANGE, 24
+                ));
+            }
+            
+            if (scoreSystem.getMultiplier() > 1.0) {
+                floatingTexts.add(new FloatingText(
+                    String.format("x%.1f", scoreSystem.getMultiplier()),
+                    result.x, result.y - 60,
+                    Color.rgb(255, 100, 255), 24
+                ));
+            }
+        }
+        
+        // Прокрутка мира
+        if (player.getY() < SCROLL_THRESHOLD && player.getVelocityY() < 0) {
+            double scrollAmount = SCROLL_THRESHOLD - player.getY();
+            
+            if (scrollAmount >= MIN_HEIGHT_FOR_SCORE) {
+                int heightBonus = scoreSystem.addHeightBonus((int) scrollAmount);
+                if (heightBonus > 0) {
+                    floatingTexts.add(new FloatingText(
+                        "+" + heightBonus,
+                        player.getX() + PLAYER_WIDTH / 2,
+                        player.getY() - 30,
+                        DARK_BLUE, 24
+                    ));
+                }
+            }
+            
+            player.setY(player.getY() + scrollAmount);
+            
+            for (Platform platform : platforms) {
+                platform.setY(platform.getY() + scrollAmount);
+            }
+        }
+        
+        // Обновление платформ
+        platforms.removeIf(platform -> !platform.update());
+        platforms.removeIf(platform -> platform.getY() > HEIGHT + 100);
+        
+        generateNewPlatforms();
+        
+        // Обновление плавающего текста
+        floatingTexts.removeIf(text -> !text.update());
+    }
+    
+    private void draw() {
+        // Очистка canvas
+        gc.clearRect(0, 0, WIDTH, HEIGHT);
+        
+        // Фон
+        gc.setFill(BACKGROUND);
+        gc.fillRect(0, 0, WIDTH, HEIGHT);
+        
+        // Облака
+        drawClouds();
+        
+        // Платформы
+        for (Platform platform : platforms) {
+            platform.draw(gc);
+        }
+        
+        // Игрок
+        player.draw(gc);
+        
+        // Плавающий текст
+        for (FloatingText text : floatingTexts) {
+            text.draw(gc);
+        }
+        
+        // HUD
+        drawHUD();
+        
+        // Экран окончания игры
+        if (gameOver) {
+            drawGameOverScreen();
+        }
+    }
+    
+    private void drawClouds() {
+        gc.setFill(Color.rgb(255, 255, 255, 0.8));
+        
+        // Облако 1
+        gc.fillOval(100, 100, 60, 40);
+        gc.fillOval(140, 90, 50, 30);
+        gc.fillOval(130, 120, 40, 25);
+        
+        // Облако 2
+        gc.fillOval(350, 150, 50, 30);
+        gc.fillOval(380, 140, 60, 35);
+        gc.fillOval(370, 170, 40, 25);
+    }
+    
+    private void drawHUD() {
+        gc.setFill(YELLOW);
+        gc.setFont(new Font(20));
+        gc.setTextAlign(javafx.scene.text.TextAlignment.LEFT);
+        gc.fillText("Очки: " + scoreSystem.getScore(), 10, 30);
+        
+        gc.setFill(YELLOW);
+        gc.fillText("Рекорд: " + scoreSystem.getHighScore(), WIDTH - 150, 30);
+        
+        if (scoreSystem.getCombo() > 0) {
+            gc.setFill(ORANGE);
+            gc.setFont(new Font(16));
+            gc.fillText("Комбо: " + scoreSystem.getCombo(), 10, 60);
+        }
+        
+        if (scoreSystem.getMultiplier() > 1.0) {
+            gc.setFill(Color.rgb(255, 100, 255));
+            gc.fillText(String.format("Множитель: x%.1f", scoreSystem.getMultiplier()), 10, 85);
+        }
+    }
+    
+    private void drawGameOverScreen() {
+        gc.setFill(Color.rgb(0, 0, 0, 0.7));
+        gc.fillRect(0, 0, WIDTH, HEIGHT);
+        
+        gc.setFill(RED);
+        gc.setFont(new Font(48));
+        gc.setTextAlign(javafx.scene.text.TextAlignment.CENTER);
+        gc.fillText("GAME OVER", WIDTH / 2, HEIGHT / 2 - 50);
+        
+        gc.setFill(YELLOW);
+        gc.setFont(new Font(36));
+        gc.fillText("Очки: " + scoreSystem.getScore(), WIDTH / 2, HEIGHT / 2);
+        gc.fillText("Рекорд: " + scoreSystem.getHighScore(), WIDTH / 2, HEIGHT / 2 + 40);
+        
+        gc.setFill(WHITE);
+        gc.setFont(new Font(24));
+        gc.fillText("Нажмите R для перезапуска", WIDTH / 2, HEIGHT / 2 + 100);
+        gc.fillText("Нажмите ESC для выхода", WIDTH / 2, HEIGHT / 2 + 140);
+    }
+    
+    private void gameOver() {
+        gameOver = true;
+        scoreSystem.saveHighScore();
+    }
+    
+    private void restartGame() {
+        scoreSystem.reset();
+        player = new Player(isBoy);
+        platforms.clear();
+        floatingTexts.clear();
+        gameOver = false;
+        generateInitialPlatforms();
+    }
+    
+    private void generateInitialPlatforms() {
+        platforms.add(new Platform(
+            WIDTH / 2 - PLATFORM_WIDTH / 2,
+            HEIGHT - 100,
+            "normal"
+        ));
+        
+        double currentY = HEIGHT - 150;
+        
+        for (int i = 0; i < 19; i++) {
+            double rand = Math.random();
+            String platformType = "normal";
+            
+            if (rand < 0.1) platformType = "breaking";
+            else if (rand < 0.2) platformType = "spring";
+            else if (rand < 0.4) platformType = "moving";
+            
+            double minY = currentY - 80;
+            double maxY = currentY - 40;
+            
+            PlatformPosition pos = findValidPlatformPosition(minY, maxY);
+            
+            platforms.add(new Platform(pos.x, pos.y, platformType));
+            currentY = pos.y;
+        }
+    }
+    
+    private void generateNewPlatforms() {
+        while (platforms.size() < 15) {
+            double minY, maxY;
+            
+            if (!platforms.isEmpty()) {
+                double highestY = platforms.stream()
+                    .mapToDouble(Platform::getY)
+                    .min()
+                    .orElse(HEIGHT);
+                minY = highestY - 120;
+                maxY = highestY - 60;
+            } else {
+                minY = -150;
+                maxY = -80;
+            }
+            
+            double rand = Math.random();
+            String platformType = "normal";
+            
+            if (rand < 0.15) platformType = "breaking";
+            else if (rand < 0.3) platformType = "spring";
+            else if (rand < 0.5) platformType = "moving";
+            
+            PlatformPosition pos = findValidPlatformPosition(minY, maxY);
+            platforms.add(new Platform(pos.x, pos.y, platformType));
+        }
+    }
+    
+    private PlatformPosition findValidPlatformPosition(double minY, double maxY) {
+        for (int attempt = 0; attempt < 50; attempt++) {
+            double x = Math.random() * (WIDTH - PLATFORM_WIDTH);
+            double y = minY + Math.random() * (maxY - minY);
+            
+            if (isValidPosition(x, y)) {
+                return new PlatformPosition(x, y);
+            }
+        }
+        
+        // Если не нашли подходящую позицию, возвращаем случайную
+        return new PlatformPosition(
+            Math.random() * (WIDTH - PLATFORM_WIDTH),
+            minY + Math.random() * (maxY - minY)
+        );
+    }
+    
+    private boolean isValidPosition(double x, double y) {
+        if (x < 0 || x + PLATFORM_WIDTH > WIDTH) return false;
+        
+        for (Platform platform : platforms) {
+            double verticalDistance = Math.abs(y - platform.getY());
+            if (verticalDistance < MIN_PLATFORM_DISTANCE) {
+                if (!(x + PLATFORM_WIDTH < platform.getX() || x > platform.getX() + platform.getWidth())) {
+                    return false;
+                }
+            }
+        }
+        
+        return true;
+    }
+    
+    public static void main(String[] args) {
+        launch(args);
+    }
+    
+    // Вспомогательные классы
+    
+    private static class PlatformPosition {
+        double x, y;
+        
+        PlatformPosition(double x, double y) {
+            this.x = x;
+            this.y = y;
+        }
+    }
+}
 
-        // Запуск при загрузке страницы
-        window.addEventListener('load', init);
-    </script>
-</body>
-</html>
+// ==================== КЛАСС ScoreSystem ====================
+
+class ScoreSystem {
+    private int score = 0;
+    private int highScore = 0;
+    private int combo = 0;
+    private int maxCombo = 0;
+    private double multiplier = 1.0;
+    private int multiplierTimer = 0;
+    private double lastPlatformY = DoodleJump.HEIGHT - 100;
+    
+    public ScoreSystem() {
+        loadHighScore();
+    }
+    
+    private void loadHighScore() {
+        try {
+            LocalDate today = LocalDate.now();
+            File file = new File("score_data.json");
+            
+            if (file.exists()) {
+                String content = new String(Files.readAllBytes(file.toPath()));
+                // Простая JSON-обработка
+                if (content.contains("\"high_score\":")) {
+                    String[] parts = content.split("\"high_score\":");
+                    if (parts.length > 1) {
+                        String scoreStr = parts[1].split(",")[0].trim();
+                        highScore = Integer.parseInt(scoreStr);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            System.out.println("Ошибка загрузки рекорда: " + e.getMessage());
+            highScore = 0;
+        }
+    }
+    
+    public void saveHighScore() {
+        try {
+            String content = String.format(
+                "{\"high_score\": %d, \"last_date\": \"%s\", \"last_updated\": \"%s\"}",
+                highScore,
+                LocalDate.now().toString(),
+                java.time.LocalDateTime.now().toString()
+            );
+            Files.write(Paths.get("score_data.json"), content.getBytes());
+        } catch (Exception e) {
+            System.out.println("Ошибка сохранения рекорда: " + e.getMessage());
+        }
+    }
+    
+    public int addScore(int points, String reason) {
+        int actualPoints = (int) (points * multiplier);
+        score += actualPoints;
+        
+        if (score > highScore) {
+            highScore = score;
+        }
+        
+        return actualPoints;
+    }
+    
+    public boolean addCombo(double platformY) {
+        double heightDiff = Math.abs(lastPlatformY - platformY);
+        
+        if (heightDiff >= DoodleJump.MIN_HEIGHT_FOR_SCORE) {
+            combo++;
+            
+            if (combo > maxCombo) {
+                maxCombo = combo;
+            }
+            
+            if (combo >= 5) {
+                multiplier = Math.min(3.0, 1.0 + (combo - 4) * 0.2);
+                multiplierTimer = 120;
+            }
+            
+            lastPlatformY = platformY;
+            return true;
+        } else {
+            resetCombo();
+            return false;
+        }
+    }
+    
+    public void resetCombo() {
+        combo = 0;
+        multiplier = 1.0;
+    }
+    
+    public void update() {
+        if (multiplierTimer > 0) {
+            multiplierTimer--;
+            if (multiplierTimer == 0 && combo < 5) {
+                multiplier = 1.0;
+            }
+        }
+    }
+    
+    public int addPlatformHit(String platformType, double platformY) {
+        if (!addCombo(platformY)) {
+            return 0;
+        }
+        
+        int points = 0;
+        
+        switch (platformType) {
+            case "normal": points = 10; break;
+            case "moving": points = 20; break;
+            case "breaking": points = 30; break;
+            case "spring": points = 15; break;
+        }
+        
+        int comboBonus = combo * 2;
+        points += comboBonus;
+        
+        return addScore(points, "платформа " + platformType);
+    }
+    
+    public int addHeightBonus(int height) {
+        if (height < DoodleJump.MIN_HEIGHT_FOR_SCORE) {
+            return 0;
+        }
+        int points = height / 10;
+        return addScore(points, "бонус за высоту");
+    }
+    
+    public int addPerfectLanding() {
+        return addScore(50, "идеальное приземление!");
+    }
+    
+    public void reset() {
+        score = 0;
+        combo = 0;
+        multiplier = 1.0;
+        multiplierTimer = 0;
+        lastPlatformY = DoodleJump.HEIGHT - 100;
+    }
+    
+    // Геттеры
+    public int getScore() { return score; }
+    public int getHighScore() { return highScore; }
+    public int getCombo() { return combo; }
+    public int getMaxCombo() { return maxCombo; }
+    public double getMultiplier() { return multiplier; }
+}
+
+// ==================== КЛАСС FloatingText ====================
+
+class FloatingText {
+    private String text;
+    private double x, y;
+    private Color color;
+    private int size;
+    private int duration;
+    private int timer = 0;
+    private double alpha = 1.0;
+    
+    public FloatingText(String text, double x, double y, Color color, int size) {
+        this.text = text;
+        this.x = x;
+        this.y = y;
+        this.color = color;
+        this.size = size;
+        this.duration = 60;
+    }
+    
+    public boolean update() {
+        timer++;
+        y -= 1;
+        alpha = Math.max(0, 1.0 - (double) timer / duration);
+        return timer < duration;
+    }
+    
+    public void draw(GraphicsContext gc) {
+        gc.setGlobalAlpha(alpha);
+        gc.setFill(color);
+        gc.setFont(new Font(size));
+        gc.setTextAlign(javafx.scene.text.TextAlignment.CENTER);
+        gc.fillText(text, x, y);
+        gc.setGlobalAlpha(1.0);
+    }
+}
+
+// ==================== КЛАСС Player ====================
+
+class Player {
+    private double x, y;
+    private double velocityY = 0;
+    private boolean jumping = false;
+    private int direction = 1;
+    private boolean isBoy;
+    private Platform lastPlatform = null;
+    private boolean justJumped = false;
+    private int animationTimer = 0;
+    private boolean walkAnimation = false;
+    
+    public Player(boolean isBoy) {
+        this.x = DoodleJump.WIDTH / 2 - DoodleJump.PLAYER_WIDTH / 2;
+        this.y = DoodleJump.HEIGHT - 200;
+        this.isBoy = isBoy;
+    }
+    
+    public static class UpdateResult {
+        public final int points;
+        public final double x, y;
+        
+        public UpdateResult(int points, double x, double y) {
+            this.points = points;
+            this.x = x;
+            this.y = y;
+        }
+    }
+    
+    public UpdateResult update(List<Platform> platforms, ScoreSystem scoreSystem) {
+        justJumped = false;
+        velocityY += DoodleJump.GRAVITY;
+        y += velocityY;
+        
+        animationTimer++;
+        
+        // Проверка столкновений с платформами
+        for (Platform platform : platforms) {
+            if (velocityY > 0) {
+                if (y + DoodleJump.PLAYER_HEIGHT >= platform.getY() &&
+                    y + DoodleJump.PLAYER_HEIGHT <= platform.getY() + 10 &&
+                    x + DoodleJump.PLAYER_WIDTH > platform.getX() &&
+                    x < platform.getX() + platform.getWidth()) {
+                    
+                    double playerCenter = x + DoodleJump.PLAYER_WIDTH / 2;
+                    double platformCenter = platform.getX() + platform.getWidth() / 2;
+                    double distance = Math.abs(playerCenter - platformCenter);
+                    
+                    int perfectBonus = 0;
+                    if (distance < 10 && platform != lastPlatform) {
+                        perfectBonus = scoreSystem.addPerfectLanding();
+                    }
+                    
+                    int pointsAdded = platform.onLand(scoreSystem);
+                    
+                    if (platform.getType().equals("spring")) {
+                        jump(DoodleJump.JUMP_FORCE * 1.5);
+                    } else {
+                        jump();
+                    }
+                    
+                    justJumped = true;
+                    lastPlatform = platform;
+                    
+                    int totalPoints = pointsAdded + perfectBonus;
+                    return new UpdateResult(totalPoints, platform.getX() + platform.getWidth() / 2, platform.getY());
+                }
+            }
+        }
+        
+        // Выход за границы экрана
+        if (x > DoodleJump.WIDTH) {
+            x = -DoodleJump.PLAYER_WIDTH;
+        } else if (x + DoodleJump.PLAYER_WIDTH < 0) {
+            x = DoodleJump.WIDTH;
+        }
+        
+        // Падение
+        if (y > DoodleJump.HEIGHT) {
+            return null;
+        }
+        
+        return new UpdateResult(0, 0, 0);
+    }
+    
+    public void jump() {
+        jump(DoodleJump.JUMP_FORCE);
+    }
+    
+    public void jump(double force) {
+        velocityY = -force;
+        jumping = true;
+    }
+    
+    public void move(int direction) {
+        x += direction * 8;
+        this.direction = direction;
+        walkAnimation = true;
+    }
+    
+    public void draw(GraphicsContext gc) {
+        Color playerColor = isBoy ? DoodleJump.BLUE : DoodleJump.PINK;
+        
+        // Анимация прыжка
+        if (jumping && velocityY < 0) {
+            double scaleFactor = 1.0 + Math.abs(velocityY) * 0.01;
+            double scaledWidth = DoodleJump.PLAYER_WIDTH * scaleFactor;
+            double scaledHeight = DoodleJump.PLAYER_HEIGHT * scaleFactor;
+            
+            gc.setFill(playerColor);
+            gc.fillRect(
+                x - (scaledWidth - DoodleJump.PLAYER_WIDTH) / 2,
+                y - (scaledHeight - DoodleJump.PLAYER_HEIGHT),
+                scaledWidth,
+                scaledHeight
+            );
+            
+            gc.setStroke(DoodleJump.BLACK);
+            gc.setLineWidth(2);
+            gc.strokeRect(
+                x - (scaledWidth - DoodleJump.PLAYER_WIDTH) / 2,
+                y - (scaledHeight - DoodleJump.PLAYER_HEIGHT),
+                scaledWidth,
+                scaledHeight
+            );
+        }
+        // Анимация ходьбы
+        else if (walkAnimation && velocityY >= 0) {
+            double bounce = Math.sin(animationTimer * 0.3) * 2;
+            
+            gc.setFill(playerColor);
+            gc.fillRect(x, y + bounce, DoodleJump.PLAYER_WIDTH, DoodleJump.PLAYER_HEIGHT);
+            
+            gc.setStroke(DoodleJump.BLACK);
+            gc.setLineWidth(2);
+            gc.strokeRect(x, y + bounce, DoodleJump.PLAYER_WIDTH, DoodleJump.PLAYER_HEIGHT);
+        }
+        // Обычное состояние
+        else {
+            gc.setFill(playerColor);
+            gc.fillRect(x, y, DoodleJump.PLAYER_WIDTH, DoodleJump.PLAYER_HEIGHT);
+            
+            gc.setStroke(DoodleJump.BLACK);
+            gc.setLineWidth(2);
+            gc.strokeRect(x, y, DoodleJump.PLAYER_WIDTH, DoodleJump.PLAYER_HEIGHT);
+        }
+        
+        // Лицо
+        gc.setFill(Color.rgb(255, 228, 196)); // Цвет кожи
+        gc.fillOval(x + DoodleJump.PLAYER_WIDTH / 2 - 12, y + 8, 24, 24);
+        gc.setStroke(DoodleJump.BLACK);
+        gc.strokeOval(x + DoodleJump.PLAYER_WIDTH / 2 - 12, y + 8, 24, 24);
+        
+        // Глаза
+        gc.setFill(DoodleJump.BLACK);
+        double eyeOffset = direction > 0 ? -3 : 3;
+        gc.fillOval(x + DoodleJump.PLAYER_WIDTH / 2 -
